@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<spriter_data scml_version="1.0" generator="BrashMonkey Spriter" generator_version="b5">
+    <folder id="0">
+        <file id="0" name="soultide_greencandy.png" width="64" height="64" pivot_x="0.5" pivot_y="0.5"/>
+        <file id="1" name="soultide_goldencandy.png" width="64" height="64" pivot_x="0.5" pivot_y="0.5"/>
+        <file id="2" name="soultide_bluecandy.png" width="64" height="64" pivot_x="0.5" pivot_y="0.5"/>
+        <file id="3" name="soultide_purplecandy.png" width="64" height="64" pivot_x="0.5" pivot_y="0.5"/>
+        <file id="4" name="soultide_redcandy.png" width="64" height="64" pivot_x="0.5" pivot_y="0.5"/>
+    </folder>
+    <entity id="0" name="soultide_candy">
+        <animation id="0" name="soultide_greencandy" length="1000">
+            <mainline>
+                <key id="0">
+                    <object_ref id="0" name="soultide_greencandy" folder="0" file="0" abs_x="0" abs_y="0" abs_pivot_x="0.5" abs_pivot_y="0.5" abs_angle="0" abs_scale_x="1.5" abs_scale_y="1.5" abs_a="1" timeline="0" key="0" z_index="0"/>
+                </key>
+            </mainline>
+            <timeline id="0" name="soultide_greencandy">
+                <key id="0" spin="0">
+                    <object folder="0" file="0" angle="0" scale_x="1.5" scale_y="1.5"/>
+                </key>
+            </timeline>
+        </animation>
+        <animation id="1" name="soultide_bluecandy" length="1000">
+            <mainline>
+                <key id="0">
+                    <object_ref id="0" name="soultide_bluecandy" folder="0" file="2" abs_x="0" abs_y="0" abs_pivot_x="0.5" abs_pivot_y="0.5" abs_angle="0" abs_scale_x="1.5" abs_scale_y="1.5" abs_a="1" timeline="0" key="0" z_index="0"/>
+                </key>
+            </mainline>
+            <timeline id="0" name="soultide_bluecandy">
+                <key id="0" spin="0">
+                    <object folder="0" file="2" angle="0" scale_x="1.5" scale_y="1.5"/>
+                </key>
+            </timeline>
+        </animation>
+        <animation id="2" name="soultide_purplecandy" length="1000">
+            <mainline>
+                <key id="0">
+                    <object_ref id="0" name="soultide_purplecandy" folder="0" file="3" abs_x="0" abs_y="0" abs_pivot_x="0.5" abs_pivot_y="0.5" abs_angle="0" abs_scale_x="1.5" abs_scale_y="1.5" abs_a="1" timeline="0" key="0" z_index="0"/>
+                </key>
+            </mainline>
+            <timeline id="0" name="soultide_purplecandy">
+                <key id="0" spin="0">
+                    <object folder="0" file="3" angle="0" scale_x="1.5" scale_y="1.5"/>
+                </key>
+            </timeline>
+        </animation>
+        <animation id="3" name="soultide_goldencandy" length="1000">
+            <mainline>
+                <key id="0">
+                    <object_ref id="0" name="soultide_goldencandy" folder="0" file="1" abs_x="0" abs_y="0" abs_pivot_x="0.5" abs_pivot_y="0.5" abs_angle="0" abs_scale_x="1.5" abs_scale_y="1.5" abs_a="1" timeline="0" key="0" z_index="0"/>
+                </key>
+            </mainline>
+            <timeline id="0" name="soultide_goldencandy">
+                <key id="0" spin="0">
+                    <object folder="0" file="1" angle="0" scale_x="1.5" scale_y="1.5"/>
+                </key>
+            </timeline>
+        </animation>
+        <animation id="4" name="soultide_redcandy" length="1000">
+            <mainline>
+                <key id="0">
+                    <object_ref id="0" name="soultide_redcandy" folder="0" file="4" abs_x="0" abs_y="0" abs_pivot_x="0.5" abs_pivot_y="0.5" abs_angle="0" abs_scale_x="1.5" abs_scale_y="1.5" abs_a="1" timeline="0" key="0" z_index="0"/>
+                </key>
+            </mainline>
+            <timeline id="0" name="soultide_redcandy">
+                <key id="0" spin="0">
+                    <object folder="0" file="4" angle="0" scale_x="1.5" scale_y="1.5"/>
+                </key>
+            </timeline>
+        </animation>
+    </entity>
+</spriter_data>
