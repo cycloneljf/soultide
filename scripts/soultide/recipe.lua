@@ -10,52 +10,54 @@ AddRecipeFilter({	--添加新的制作栏
 	-- custom_pos = true	--true:不加一个新的制作栏,不显示网格而是在mod物品里
 })
 
+AddRecipeFilter({	--添加新的制作栏
+	name = "SOUL_CANDY",
+	atlas = "images/soultide_candyicon.xml", image = "soultide_candyicon.tex",
+	-- custom_pos = true	--true:不加一个新的制作栏,不显示网格而是在mod物品里
+})
 
 local soultide ={
     {
     name = "soultide_greencandy",
-    ingredients = {Ig("honey",1),Ig("petals",2)},
-    level = TECH.SCIENCE_ONE,
-    filters = {"SOULTIDE"},  -- filter 不能拼成fliter
+    ingredients = {Ig("honey",1),Ig("petals",2),Ig("berries",1)},
+    level = TECH.NONE,
+    filters = {"SOUL_CANDY"},  -- filter 不能拼成fliter
     },
 
     {
     name = "soultide_greencandy_b",
-    ingredients = {Ig("honey",8),Ig("petals",16)},
-    level = TECH.SCIENCE_TWO,
-    filters = {"SOULTIDE"},
+    ingredients = {Ig("honey",8),Ig("petals",16),Ig("berries",8)},
+    level = TECH.SCIENCE_ONE,
+    filters = {"SOUL_CANDY"},
     product = "soultide_greencandy",
     numtogive = 10,
     },
-    
+
     {
     name = "soultide_bluecandy",
     ingredients = {Ig("soultide_greencandy",3,true)},
     level = TECH.SOULTIDE_SCIENCE_BLUE,
-    filters = {"SOULTIDE"},
-
+    filters = {"SOUL_CANDY"},
     },
-
     {
     name = "soultide_purplecandy",
     ingredients = {Ig("soultide_bluecandy",3,true)},
     level = TECH.SOULTIDE_SCIENCE_PURPLE,
-    nounlock = false,
-    filters = {"SOULTIDE"},
+    filters = {"SOUL_CANDY"},
     },
     
     {
     name = "soultide_goldencandy",
     ingredients = {Ig("soultide_purplecandy",3,true)},
     level = TECH.SOULTIDE_SCIENCE_GOLDEN,
-    filters = {"SOULTIDE"},
+    filters = {"SOUL_CANDY"},
     },
 
     {
     name = "soultide_redcandy",
     ingredients = {Ig("soultide_goldencandy",3,true)},
     level = TECH.SOULTIDE_SCIENCE_RED,
-    filters = {"SOULTIDE"},
+    filters = {"SOUL_CANDY"},
     },
 
     {
@@ -69,24 +71,52 @@ local soultide ={
     name = "soultide_candybag_blue",
     ingredients = {Ig("goldnugget",5),Ig("papyrus",1)},
     level = TECH.NONE,
-    filters = {"SOULTIDE"},
+    filters = {"SOUL_CANDY"},
+    },
+    {
+    name = "soultide_candybag_blue_b",
+    ingredients = {Ig("goldnugget",20),Ig("papyrus",4)},
+    level = TECH.SOULTIDE_SCIENCE_BLUE,
+    filters = {"SOUL_CANDY"},
+    product = "soultide_candybag_blue",
+    numtogive = 5
+    },
+    {
+    name = "soultide_candybag_purple",
+    ingredients = {Ig("soultide_candybag_blue",3,true),Ig("gears",1)},
+    level = TECH.SCIENCE_ONE,
+    filters = {"SOUL_CANDY"},
+    },
+    {
+    name = "soultide_candybag_purple_b",
+    ingredients = {Ig("soultide_candybag_blue",12,true),Ig("gears",4)},
+    level = TECH.SOULTIDE_SCIENCE_PURPLE,
+    filters = {"SOUL_CANDY"},
+    product = "soultide_candybag_purple",
+    numtogive = 5
+    },
+    {
+    name = "soultide_candybag_golden",
+    ingredients = {Ig("soultide_candybag_purple",3,true),Ig("moonglass",1)},
+    level = TECH.SCIENCE_TWO,
+    filters = {"SOUL_CANDY"},
     },
     {
         name = "soultide_core_blue",
         ingredients = {Ig("soultide_bluecandy",5,true),Ig("transistor",2),Ig("bluemooneye",1)},
-        level = TECH.NONE,
+        level = TECH.SOULTIDE_SCIENCE_BLUE,
         filters = {"SOULTIDE"},
     },
     {
         name = "soultide_core_purple",
         ingredients = {Ig("soultide_purplecandy",5,true),Ig("gears",2),Ig("purplemooneye",1)},
-        level = TECH.NONE,
+        level = TECH.SOULTIDE_SCIENCE_PURPLE,
         filters = {"SOULTIDE"},
     },
     {
         name = "soultide_core_golden",
         ingredients = {Ig("soultide_goldencandy",4,true),Ig("trinket_6",2),Ig("yellowmooneye",1)},
-        level = TECH.NONE,
+        level = TECH.SOULTIDE_SCIENCE_GOLDEN,
         filters = {"SOULTIDE"},
     },
     {
@@ -117,6 +147,24 @@ local soultide ={
         level = TECH.NONE,
         filters = {"SOULTIDE"},
     },
+    {
+        name = "soultide_crystaltower_item",
+        ingredients = {Ig("soultide_purplecandy",2,true),Ig("moonglass",10),Ig("thulecite",5)},
+        level = TECH.NONE,
+        filters = {"SOULTIDE"},
+    },
+    {
+        name = "soultide_corolla_bt",
+        ingredients = {Ig("soultide_purplecandy",2,true),Ig("moonglass",10),Ig("thulecite",5)},
+        level = TECH.NONE,
+        filters = {"SOULTIDE"},
+    },
+    {
+    name = "soultide_brooch_su",
+    ingredients = {Ig("soultide_purplecandy",2,true),Ig("moonglass",8),Ig("opalpreciousgem",1),Ig("thulecite",5)},
+    level = TECH.NONE,
+    filters = {"SOULTIDE"},
+    },
 }
 
 
@@ -124,6 +172,7 @@ local soultide ={
 local recipes = {}
 
 for k,v in ipairs(soultide) do
+    v.hint_msg = "NEEDSSOULTIDE_SCIENCE"
 	table.insert(recipes,v)
 end
 
@@ -150,6 +199,7 @@ for _,data in ipairs(recipes) do
 			image = data.image or data.noimage ~= true and ((data.product or data.name)..".tex"),
 
 			placer=data.placer,
+            hint_msg = data.hint_msg,
 			filter=data.filter,
 			--description=data.description,
 			canbuild=data.canbuild,

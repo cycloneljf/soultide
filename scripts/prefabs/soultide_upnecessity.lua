@@ -23,11 +23,11 @@ local factor = function (a) --品质因子
     end
 end
 
-local function upnecessitymake(mc2, nc , str , desc ) --main c name c
+local function upnecessitymake(mc2) --main c name c
 	local mc = "soultide_"..mc2
-	STRINGS.NAMES[string.upper(mc)] = nc
-	STRINGS.RECIPE_DESC[string.upper(mc)] = str
-	STRINGS.CHARACTERS.GENERIC.DESCRIBE[string.upper(mc)] =  desc
+	STRINGS.NAMES[string.upper(mc)] = TUNING.SOULTIDE.LANGUAGE[string.upper(mc2).."_NAME"]
+	STRINGS.RECIPE_DESC[string.upper(mc)] =  TUNING.SOULTIDE.LANGUAGE[string.upper(mc2).."_RECIPE_DESC"]
+	STRINGS.CHARACTERS.GENERIC.DESCRIBE[string.upper(mc)] =  TUNING.SOULTIDE.LANGUAGE[string.upper(mc2).."_CHAG_DESC"]
 	return Prefab(mc, function()
 		local inst = CreateEntity()
 		inst.entity:AddTransform()
@@ -78,9 +78,9 @@ local function upnecessitymake(mc2, nc , str , desc ) --main c name c
 end
 
 return  --不能漏掉
-upnecessitymake("moonsoul_blue", "荧魄" , "凝聚月光之力" , "是小型的月光的能量集合" ),
-upnecessitymake("moonspringcrystal_purple", "月泉结晶" , "凝聚更强的月光之力 ", "是大型的月光的能量集合" ), --按因子 的优先级是purple
-upnecessitymake("core_blue", "精良升级核心" , "凝聚升级之力" , "用于给一些物品升级" ),
-upnecessitymake("core_purple", "史诗升级核心" , "凝聚升级之力" , "用于给一些物品升级" ),
-upnecessitymake("core_golden", "传说升级核心" , "凝聚升级之力" , "用于给一些物品升级" ),
-upnecessitymake("core_season", "行迹之心" , "凝聚自然的升级之力" , "用于给一些物品升级" )
+upnecessitymake("moonsoul_blue" ),
+upnecessitymake("moonspringcrystal_purple"), --按因子 的优先级是purple
+upnecessitymake("core_blue"),
+upnecessitymake("core_purple" ),
+upnecessitymake("core_golden" ),
+upnecessitymake("core_season" )

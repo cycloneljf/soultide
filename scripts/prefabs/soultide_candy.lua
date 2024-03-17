@@ -19,11 +19,18 @@ local factor = function (a) --品质因子
         return 1
     end
 end
-local function candymake(mc2, nc) --main c name c
+local _oneaten =  function ( inst ,eater )
+	if eater.components and  eater.components.soultide_sp then
+		eater.components.soultide_sp:DoDelta( TUNING.SOULTIDE.BASE_SP * factor(inst.prefab) ) --记得测完删掉
+	end
+end
+
+
+local function candymake(mc2) --main c name c
 	local mc = "soultide_"..mc2
-	STRINGS.NAMES[string.upper(mc)] = nc
-	STRINGS.RECIPE_DESC[string.upper(mc)] = "稀有的糖果，可以从中获得经验"
-	STRINGS.CHARACTERS.GENERIC.DESCRIBE[string.upper(mc)] = "甜甜的 很好吃"
+	STRINGS.NAMES[string.upper(mc)] = TUNING.SOULTIDE.LANGUAGE[string.upper(mc2).."_NAME"]
+	STRINGS.RECIPE_DESC[string.upper(mc)] = TUNING.SOULTIDE.LANGUAGE.CANDY_RECIPE_DESC
+	STRINGS.CHARACTERS.GENERIC.DESCRIBE[string.upper(mc)] = TUNING.SOULTIDE.LANGUAGE.CANDY_CHAG_DESC
 	return Prefab(mc, function()
 		local inst = CreateEntity()
 		inst.entity:AddTransform()
@@ -32,6 +39,8 @@ local function candymake(mc2, nc) --main c name c
 
 		MakeInventoryPhysics(inst)
 		MakeInventoryFloatable(inst)
+
+		inst:AddTag("soultide_candy")
 
 		inst.AnimState:SetBank("soultide_candy")
 		inst.AnimState:SetBuild("soultide_candy")
@@ -43,7 +52,7 @@ local function candymake(mc2, nc) --main c name c
 			return inst
 		end
 
-		inst:AddTag("soultide_candy")
+
 		inst:AddTag(mc)
 
 		inst:AddComponent("stackable")
@@ -59,9 +68,10 @@ local function candymake(mc2, nc) --main c name c
 
         inst:AddComponent("edible")
 		inst.components.edible.foodtype = "GOODIES"
-        inst.components.edible.healthvalue = 10 * factor(mc2) --根据品质赋予不同的回复量
-        inst.components.edible.hungervalue = 5  * factor(mc2)
-        inst.components.edible.sanityvalue = 30 * factor(mc2)
+        inst.components.edible.healthvalue = TUNING.SOULTIDE.BASE_HEALTH * factor(mc2) --根据品质赋予不同的回复量
+        inst.components.edible.hungervalue = TUNING.SOULTIDE.BASE_HUNGER  * factor(mc2)
+        inst.components.edible.sanityvalue = TUNING.SOULTIDE.BASE_SANITY * factor(mc2)
+		inst.components.edible.oneaten = _oneaten
 
 		return inst
 	end,
@@ -71,8 +81,8 @@ local function candymake(mc2, nc) --main c name c
 end
 
 return  --不能漏掉
-candymake("bluecandy","蓝色糖丸"),
-candymake("greencandy","绿色糖丸"),
-candymake("purplecandy","紫色糖块"),
-candymake("goldencandy","金色糖块"),
-candymake("redcandy","红色糖灵")
+candymake("bluecandy"),
+candymake("greencandy"),
+candymake("purplecandy"),
+candymake("goldencandy"),
+candymake("redcandy")

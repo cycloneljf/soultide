@@ -1,3 +1,5 @@
+
+
 local assets = 
 {
     Asset("ANIM", "anim/soultide_dgs.zip"),  --地上的动画
@@ -11,22 +13,20 @@ local assets =
 
 --更新函数
 local function update_weapon(inst)
-
-    --if inst.scale  < TUNING.SOULTIDE.DGS.MAX_SCALE and inst.gemE >= 50 * inst.scale  and inst.shadowE >= 50 * inst.scale then
-    --     inst.scale = inst.scale + 1
-    -- end
-    ----------攻击力与速度
+    local scale = inst.scale
+    local a = math.ceil(2*scale - math.log(scale,2)) -- lv1 = 2  lv2 = 3  lv4 = 6 lv8 = 13
+    local b = math.floor(scale + math.log(scale,2))  -- lv1 = 1  lv2 = 3  lv4 = 6 lv8 = 11
     inst.components.planardamage:SetBaseDamage(
-        TUNING.SOULTIDE.EXTRA + 
-       math.floor(6 *( math.log(inst.scale,4) + (inst.scale - 1)))    -- lv 1 - 0 , lv 4 = 24 , lv 8 = 52  ,lv 16 = 102 , lv 64 = 402
+        TUNING.SOULTIDE.EXTRA +
+        b * 6
     )
     inst.components.weapon:SetDamage(
-        36 + TUNING.SOULTIDE.EXTRA +
-        12 * (inst.scale  - 1)
+        TUNING.SOULTIDE.DGS.BASEDAMAGE + TUNING.SOULTIDE.EXTRA +
+        a * 6
     )
-    inst.components.equippable.walkspeedmult = 1 + (inst.scale* 0.05 )
+    inst.components.equippable.walkspeedmult = 1 + (b * 0.04 )
     ----------暗影武器，对月亮增伤
-    inst.components.damagetypebonus:AddBonus("lunar_aligned", inst, 0.95+(inst.scale * 0.1))
+    inst.components.damagetypebonus:AddBonus("lunar_aligned", inst, 1 +  b * 0.05)
     -------- 更新网络变量
     inst.net_scale :set(inst.scale)
     inst.net_gemE :set(inst.gemE)
@@ -45,6 +45,9 @@ local function onload(inst,data)
     inst.gemE = data.gemE
     inst.shadowE = data.shadowE
     inst.scale = data.scale
+    inst.net_scale :set(inst.scale)
+    inst.net_gemE :set(inst.gemE)
+    inst.net_shadowE :set(inst.shadowE)
     end
     update_weapon(inst)
 end
@@ -100,32 +103,44 @@ local function onattack(inst, attacker, target)
     local gemE =  inst.gemE
     local shadowE = inst.shadowE
     local scale = inst.scale
-    local wdamage = 36 + TUNING.SOULTIDE.EXTRA +
-    12 * (inst.scale  - 1) --武器基础攻击力
-    local pdamage = TUNING.SOULTIDE.EXTRA + math.floor(6 *( math.log(inst.scale,4) + (inst.scale - 1)))  --武器位面攻击力
-
+    local a = math.ceil(2*scale - math.log(scale,2)) -- lv1 = 2  lv2 = 3  lv4 = 6 lv8 = 13
+    local b = math.floor(scale + math.log(scale,2))  -- lv1 = 1  lv2 = 3  lv4 = 6 lv8 = 11
+    local wdamage =   TUNING.SOULTIDE.DGS.BASEDAMAGE + TUNING.SOULTIDE.EXTRA +
+    a * 6 --武器基础攻击力
+    local pdamage = TUNING.SOULTIDE.EXTRA +
+    b * 6  --武器位面攻击力
+    local line = ( 50 * TUNING.SOULTIDE.WORLDLEVEL - 50 + wdamage + pdamage ) --斩杀线  -- 对于低生命物体 -- 无视防御
+    local mount = target.components.health.maxhealth
+    local percent = shadowE /(shadowE + 100)  -- 0 到 1  斩杀线   --10级能量加满是0.83
+    local killrate = 0.8 * gemE / (gemE + 50)  --0 - 0.8 斩杀率 --10级能量加满是0.72必杀
     --寒冷恐惧
     if target and target.components and target.components.freezable then
-        target.components.freezable:AddColdness(0.5 + shadowE * 0.02)  
+        target.components.freezable:AddColdness(0.5 + percent + killrate )
+    end
+    --特判--对于1下就死 的怪物, 最大血量满足我们的要求
+    if target and target.components and attacker and target.components.lootdropper and  mount < line then
+        local pt = attacker:GetPosition() --获得vector(x,y,z)
+                
+        target.components.lootdropper:DropLoot(pt) --需要vector(x,y,z)
+        print("收割1！")
+    --触发特效
+        local fx = SpawnPrefab("shadow_puff")
+        fx.Transform:SetPosition(pt:Get()) --需要x,y,z
     end
     --概率秒杀
     if target and target.components and not target.components.health:IsDead() then
         local now = target.components.health:GetPercent()
-        local percent = shadowE /(shadowE + 100)  -- 0 到 1  斩杀线   --10级能量加满是83.3%
-        local line = ( 50 * TUNING.SOULTIDE.WORLDLEVEL - 50 + wdamage + pdamage ) --斩杀线  -- 对于低生命物体 -- 无视防御
-        local killrate = (0.05 + scale * 0.05 + gemE * 0.001 )  -- 斩杀率 --10级能量加满是1.05必杀
-        local mount = target.components.health.currenthealth
         local ram = math.random()
-
+        --print("秒杀？" .. mount " <" .. line  )数字上面要写string.format aaa 
         if (now < percent and ram < killrate ) or  mount < line then --初始10%概率秒杀 最高100%
-            --print("秒杀！")
+            print("秒杀！")
         --收割1--触发秒杀额外一次战利品--生成在脚下
             if  target and attacker and target.components.lootdropper -- and target.components.lootdropper.loot这个没有，只有掉落的时候才生成的
             then
                 local pt = attacker:GetPosition() --获得vector(x,y,z)
                 
                 target.components.lootdropper:DropLoot(pt) --需要vector(x,y,z)
-                --print("收割1！")
+                print("收割1！")
             --触发特效
                 local fx = SpawnPrefab("shadow_puff")
                 fx.Transform:SetPosition(pt:Get()) --需要x,y,z
@@ -149,127 +164,122 @@ local function onattack(inst, attacker, target)
     --生命汲取
     if  target and attacker then
         local percent2 =  (4  - math.exp( -gemE*0.01 + 1 )) - (4  - math.exp( -gemE*0.01 + 1 ))%0.01  --约为 1.3 - 3.4 (%)
-        local tim = math.max(TUNING.SOULTIDE.DGS.CD, 1 - ((scale -1) * 0.1) )   --冷却时间 0.2 - 1
+        local tim = math.max(TUNING.SOULTIDE.DGS.CD, 1.1 - b * 0.1)   --冷却时间 0.2 - 1
+        --专武加成
+        local c = 0.01
         if not inst.components.timer:TimerExists("health_cd1") then
             inst.components.timer:StartTimer("health_cd1",tim)
+            if attacker.prefab == "frisia" then
+                --print("yes master")
+                c = 0.03
+            end
             attacker.components.sanity:DoDelta(percent2)
-            attacker.components.health:DoDelta(percent2 * wdamage *0.03 )
+            attacker.components.health:DoDelta( c * percent2 * wdamage )
         end 
     end
     --收割2--攻击时概率额外一个战利品--生成在脚下--与1独立
     if  target and attacker and target.components.lootdropper  --target.components.lootdropper.loot 
     then
         local ram2 = math.random()
-        local percent2 =  (0.5 * gemE + 2) / (gemE + 50)  --(4% - 50%)
+        local percent2 =  killrate + 0.1  --(10% - 90%)
         if ram2 <= percent2 then
             local loots = target.components.lootdropper:GenerateLoot()
             local pt = attacker:GetPosition()
             --print("收割2-1！")
             if not inst.components.timer:TimerExists("loot_cd1") then
-                inst.components.timer:StartTimer("loot_cd1",math.max(3,24 - (scale + math.log(scale,2) ))) --最低三秒,默认CD24s --17级升满 -- 10
-                --print("收割2！")
+                inst.components.timer:StartTimer("loot_cd1",math.max(3,24 - b )) --最低三秒,默认CD24s --17级升满 -- 10
+                print("收割2！")
             local fx = SpawnPrefab("shadow_puff")
             fx.Transform:SetPosition(pt:Get())
-
-            local loot = loots[math.random(1,#loots)]  --获得随机战利品
+            if loots and #loots ~= nil and #loots >= 1 then  --打岩浆虫的问题
+                local loot = loots[math.random(1,#loots)]  --获得随机战利品 注意局部变量
+                target.components.lootdropper:SpawnLootPrefab(loot,pt)
+            end
             -- SpawnLootPrefab(loot,pt) --纯笨比，一个bug就要修一次,和SpawnPrefab不一样
-            target.components.lootdropper:SpawnLootPrefab(loot,pt)
             end
         end
     end
-    --攻击后加速
+    --攻速
     if attacker.components.combat then
-        attacker.components.combat:SetAttackPeriod(  math.min(0.2 ,0.4 - ((inst.scale -1) * 0.02)) )
+        attacker.components.combat:SetAttackPeriod( math.min(0.2 ,0.4 - a * 0.02) )
         --print (" period" ..  1 + ((inst.scale -1) * 0.1)) 
     end
 
-
-
-    if scale >= TUNING.SOULTIDE.DGS.T1 then
-        --攻击特效
+    if scale >= TUNING.SOULTIDE.T.T1 then
+        --T1攻击特效 + 范围攻击
         local fx = "hitsparks_fx"
         if target ~= nil and target:IsValid() then
             SpawnPrefab(fx):Setup(attacker, target)
+        end   
+        attacker.components.combat:SetAreaDamage( a, percent , function (ent , inst)
+            for _, value in ipairs(TUNING.SOULTIDE.AOE_CANT_TAGS) do
+                    if ent:HasTag(value) then
+                        return false
+                    end
+                end
+                return true
+        end)
+    end
+    --T2 解锁传送法杖
+    --T3 解锁收割加强
+end
+-----------暗影镰刀的收割
+local HARVEST_MUSTTAGS  = {"pickable"}
+local HARVEST_CANTTAGS  = {"INLIMBO", "FX"}
+local HARVEST_ONEOFTAGS = {"plant", "lichen", "oceanvine", "kelp"}
+local function HarvestPickable(inst, ent, doer)
+    if ent.components.pickable.picksound ~= nil then
+        doer.SoundEmitter:PlaySound(ent.components.pickable.picksound)
+    end
+
+    local success, loot = ent.components.pickable:Pick(TheWorld)
+
+    if loot ~= nil then
+        for i, item in ipairs(loot) do
+            Launch(item, doer, 1.5)
         end
     end
 end
---检查是否在交易单里
-local function check(obj,t)  --物体 表
-    local t =  t or TUNING.SOULTIDE.ENERGY_LIST
-    local count = 0
-    local val = 0
-    print("check the prefab is " .. obj.prefab)
-    for key, value in pairs(t) do
-        if string.match( obj.prefab, key) then
-            print("check the prefab match  " .. key)
-            count = count + 1
-            val = value
+local function IsEntityInFront(inst, entity, doer_rotation, doer_pos)
+    local facing = Vector3(math.cos(-doer_rotation / RADIANS), 0 , math.sin(-doer_rotation / RADIANS))
+
+    return IsWithinAngle(doer_pos, facing, TUNING.VOIDCLOTH_SCYTHE_HARVEST_ANGLE_WIDTH, entity:GetPosition())
+end
+local function DoScythe(inst, target, doer)
+    --inst:SayRandomLine(STRINGS.VOIDCLOTH_SCYTHE_TALK.onharvest, doer)
+    if target.components.pickable ~= nil then
+        local doer_pos = doer:GetPosition()
+        local x, y, z = doer_pos:Get()
+
+        local doer_rotation = doer.Transform:GetRotation()
+
+        local ents = TheSim:FindEntities(x, y, z, TUNING.VOIDCLOTH_SCYTHE_HARVEST_RADIUS, HARVEST_MUSTTAGS, HARVEST_CANTTAGS, HARVEST_ONEOFTAGS)
+        for _, ent in pairs(ents) do
+            if ent:IsValid() and ent.components.pickable ~= nil then
+                if inst:IsEntityInFront(ent, doer_rotation, doer_pos) then
+                    inst:HarvestPickable(ent, doer)
+                end
+            end
         end
     end
-    if count ~= 0 then
-        return true , val --是一个表
-    else
-        return false , -1
-    end
 end
---是否锁住
-local function islock(obj)
-    if obj.scale == TUNING.SOULTIDE.DGS.T1 or  obj.scale == TUNING.SOULTIDE.DGS.T3  or  obj.scale == TUNING.SOULTIDE.DGS.T2  then
-        print("islocked")
-        return false
-        
-    else
-        print("onlocked")
-        return true
-    end
-end
---等级更新
-local function upscale_weapon(obj)
-    local inst = obj
-    if inst.scale  < TUNING.SOULTIDE.DGS.MAX_SCALE and inst.gemE >= 50 * inst.scale  and inst.shadowE >= 50 * inst.scale then
-        inst.scale = inst.scale + 1
-    end
-    print("upscale_weapon")
-end
-
---交易函数(升级)
-local function OnGetItemFromPlayer(inst, giver, item)
-    local limit = 50 * inst.scale
-   print("ongetitemfp 1")
-    local ac , tab = check(item)
-    local ac2 , num = check(item,TUNING.SOULTIDE.UP)
-    -- 能量增加，未达到上限时
-    if (inst.gemE < limit or inst.shadowE < limit) and ac and tab then --合并if不改判定条件 笨比
-        inst.gemE  = math.min(inst.gemE + tab[1] ,limit)
-        inst.shadowE = math.min(inst.shadowE + tab[2] ,limit)
-
-        print("ongetitemfp 2")
-        print("item prefab is ".. item.prefab .." /".. inst.scale .." /".. inst.gemE .. " /".. inst.shadowE .." /".. tab[1] .." /".. tab[2])
-        
-        --没限制时自动升级
-        if islock(inst) then --锁住是false
-            upscale_weapon(inst)
-        end
-        update_weapon(inst)  --放后面要更新网络变量的
-    end
-    --达到上限时候
-    if  inst.shadowE == limit and inst.gemE == limit and ac2 and inst.scale == num - 1 then
-        print("ongetitemfp 3")
-        upscale_weapon(inst)
-        update_weapon(inst)
-    end
-end
-
+-------
 local function onequip(inst, owner) --装备
+    if not owner:HasTag("player") and owner:HasTag("soultide_sp") then
+        owner:DoTaskInTime(0, function()
+			local inventory = owner.components.inventory
+			if inventory then
+				inventory:DropItem(inst)
+				if owner.components.talker then owner.components.talker:Say("这不是你能够承受的") end
+			end
+		end)
+    end
                            --替换的动画部件	    使用的动画	         替换的文件夹贴图名字（注意这里也是文件夹的名字）
         owner.AnimState:OverrideSymbol("swap_object","swap_soultide_dgs","swap_soultide_dgs")
-       
         owner.AnimState:Show("ARM_carry")
         owner.AnimState:Hide("ARM_normal")
-
         lighton(inst, owner)
-        
-	-- end
+        --owner.DynamicShadow:SetSize(1.7, 1)
 end
 
 local function onunequip(inst, owner) --解除装备
@@ -279,8 +289,14 @@ local function onunequip(inst, owner) --解除装备
 
 end
 
-local function fn()
-    local inst = CreateEntity()
+
+local function dgsmake(mc2) --main c name c
+	local mc = "soultide_"..mc2
+    STRINGS.NAMES[string.upper(mc)] = TUNING.SOULTIDE.LANGUAGE.DGS_NAME
+	STRINGS.RECIPE_DESC[string.upper(mc)] = TUNING.SOULTIDE.LANGUAGE.DGS_RECIPE_DESC
+	STRINGS.CHARACTERS.GENERIC.DESCRIBE[string.upper(mc)] = TUNING.SOULTIDE.LANGUAGE.DGS_CHAG_DESC
+    return Prefab(mc,function ()
+        local inst = CreateEntity()
 
     inst.entity:AddTransform()
     inst.entity:AddAnimState()
@@ -288,14 +304,14 @@ local function fn()
 
     MakeInventoryPhysics(inst)
 
-    inst.AnimState:SetBank("soultide_dgs")  --地上动画
-    inst.AnimState:SetBuild("soultide_dgs")
+    inst.AnimState:SetBank(mc)  --地上动画
+    inst.AnimState:SetBuild(mc)
     inst.AnimState:PlayAnimation("idle")
 
     inst:AddTag("sharp") --武器的标签跟攻击方式跟攻击音效有关
     inst:AddTag("pointy")
     inst:AddTag("weapon")
-    inst:AddTag("soultide_weapon")
+    inst:AddTag("soultide_E")
 
     MakeInventoryFloatable(inst, "med", 0.05, {1.1, 0.5, 1.1}, true, -9)
 
@@ -307,90 +323,25 @@ local function fn()
     inst.net_shadowE = net_ushortint(inst.GUID, "net_shadowE")
     inst.net_gemE = net_ushortint(inst.GUID, "net_gemE")
 
+    inst.net_scale :set(inst.scale) --要写的
+
     inst.entity:SetPristine()
-
-    local old_GetDisplayName = inst.GetDisplayName --重定义
-    inst.GetDisplayName = function(self,...)
-        local str = ""
-        local level = inst.net_scale:value()
-        local se = inst.net_shadowE:value()
-        local ge = inst.net_gemE:value()
-        local elimit = level * 50
-        local function findquality (inst)
-            if inst and inst.scale and inst.net_scale then
-                if   level <=  TUNING.SOULTIDE.DGS.T2  and level > TUNING.SOULTIDE.DGS.T1 then
-                return "blue"
-                elseif level <=  TUNING.SOULTIDE.DGS.T3  and level > TUNING.SOULTIDE.DGS.T2 then
-                return "purple"
-                elseif level <=  TUNING.SOULTIDE.DGS.T4  and level > TUNING.SOULTIDE.DGS.T3 then
-                return "golden"
-                elseif level <=  TUNING.SOULTIDE.DGS.T5  and level > TUNING.SOULTIDE.DGS.T4 then
-                return "red"
-                elseif level <=  TUNING.SOULTIDE.DGS.T6  and level > TUNING.SOULTIDE.DGS.T5 then
-                return "crystal"
-                else
-                    return "green"
-                end
-            end
-        end
-        if level == TUNING.SOULTIDE.DGS.T1 and elimit == se and elimit == ge   then
-            str = "\r\n等阶["..level .. "] 可突破精良"
-            str = str .. "\r\n暗影能量："..se.."/".. elimit
-            str = str .. "\r\n宝石能量："..ge.."/".. elimit
-        elseif level == TUNING.SOULTIDE.DGS.T2 and elimit == se and elimit == ge   then
-                str = "\r\n等阶["..level .. "] 可突破史诗"
-                str = str .. "\r\n暗影能量："..se.."/".. elimit
-                str = str .. "\r\n宝石能量："..ge.."/".. elimit
-        elseif level == TUNING.SOULTIDE.DGS.T3 and elimit == se and elimit == ge   then
-                    str = "\r\n等阶["..level .. "] 可突破传说"
-                    str = str .. "\r\n暗影能量："..se.."/".. elimit
-                    str = str .. "\r\n宝石能量："..ge.."/".. elimit
-        else
-            str = "_" .. findquality(inst).."\r\n等阶["..level .. "]"
-            str = str .. "\r\n暗影能量："..se.."/".. elimit
-            str = str .. "\r\n宝石能量："..ge.."/".. elimit
-        end
-        return old_GetDisplayName(self,...)
-        ..str 
-    end
-
 
     if not TheWorld.ismastersim then
         return inst
     end
 
-    -- inst:AddComponent("AbsorbEnergy") --充能组件，感觉不如Trader
+    -- inst:AddComponent("AbsorbEnergy") --充能组件，感觉不如Trader，后来还魔改了
     -- inst.components.AbsorbEnergy.E.g = 10
     -- inst.components.AbsorbEnergy.E.s = 10
 
     -------交易 模拟升级---
     inst:AddComponent("trader")
-    inst.components.trader:SetAcceptTest(
-        function(inst, item, giver)	
-            print("setacceptright")
-            local limit = 50 * inst.scale
-            local ac = check(item)
-            local ac2 , num = check(item,TUNING.SOULTIDE.UP)
-            --能量不足可加能
-            if inst.gemE < limit  and  ac then
-                return true
-            end
-            if inst.shadowE < limit and ac then
-                return true
-            end
-            --能量满了才能放进阶
-            if inst.gemE == limit and inst.shadowE == limit and ac2 and  inst.scale == num - 1 then
-                return true
-            end
-            --return item and (item.prefab == "opalpreciousgem") 超限以后再说
-        end
-    )
-    inst.components.trader.onaccept = OnGetItemFromPlayer
-    inst.components.trader:Enable()
 
+    --武器属性
     inst:AddComponent("weapon") -- 武器组件
     inst.components.weapon:SetDamage(36 + TUNING.SOULTIDE.EXTRA)
-    inst.components.weapon:SetOnAttack(onattack)
+    inst.components.weapon:SetOnAttack(onattack) --攻击回调
     inst.components.weapon:SetRange(2.4)
 
     inst:AddComponent("planardamage") --位面伤害
@@ -399,24 +350,39 @@ local function fn()
     inst:AddComponent("damagetypebonus") --阵营伤害
 	inst.components.damagetypebonus:AddBonus("shadow_aligned", inst,1)
 	inst.components.damagetypebonus:AddBonus("lunar_aligned", inst,1.05)
-
+    
     inst:AddComponent("timer")
 
     inst:AddComponent("inspectable") --可检查组件
 
     inst:AddComponent("inventoryitem") --物品组件
 	inst.components.inventoryitem.atlasname = "images/inventoryimages/soultide_dgs.xml" --物品贴图
+    --可作为镰刀
+    inst:AddComponent("tool")
+    inst.components.tool:SetAction(ACTIONS.SCYTHE, 5)
 
     inst:AddComponent("equippable") --可装备组件
     inst.components.equippable:SetOnEquip(onequip)
     inst.components.equippable:SetOnUnequip(onunequip)
-    inst.components.equippable.walkspeedmult = 1.05
+    inst.components.equippable.walkspeedmult = 1.05 -- 加速 --不要乱动顺序啊，放前面组件都没有，写昏头了
+    
+    inst:ListenForEvent(("upgrade_Etrade_" .. mc ), update_weapon)
 
     inst.OnSave = onsave
     inst.OnLoad = onload
 
+    inst.DoScythe = DoScythe
+    inst.IsEntityInFront = IsEntityInFront
+    inst.HarvestPickable = HarvestPickable
+
     return inst --有笨比不返回
+    end,
+    assets
+)
+
 end
 
-return Prefab("soultide_dgs",fn,assets),
+    
+
+return dgsmake("dgs"),
         Prefab("dgs_light",dgs_lightfn)

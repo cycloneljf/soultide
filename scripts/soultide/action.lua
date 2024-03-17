@@ -31,6 +31,13 @@ SOULTIDE_CANDYBAG.fn = function(act)
 
     act.invobject:Remove() --消耗糖果袋
     act.doer.components.inventory:GiveItem(pre, nil , act.doer:GetPosition()) --添加物品
+    if act.doer and act.doer.components and act.doer.components.soultide_sp then
+        local sp = act.doer.components.soultide_sp:GetNow()
+        act.doer.components.talker:Say(string.format("检查sp，现在能量是%d",sp) )
+    else
+        act.doer.components.talker:Say(string.format("会获得什么呢"))
+    end
+
     return true
 end
 
