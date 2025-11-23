@@ -230,5 +230,9 @@ end
 
 
 return port_buildingmake("crystalsmelter","水晶熔炉","召唤——水晶熔炉"," 水晶熔炉是某些科技的必需建筑"),
+<<<<<<< HEAD
     port_building_item_make("crystalsmelter_item",,"水晶熔炉","召唤——水晶熔炉"," 水晶熔炉是某些科技的必需建筑"),
+=======
+    port_building_item_make("crystalsmelter_item","水晶熔炉","召唤——水晶熔炉"," 水晶熔炉是某些科技的必需建筑"),
+>>>>>>> 00b334b (v9.8.1)
     MakePlacer("soultide_crystalsmelter_item_placer", "soultide_crystalsmelter", "soultide_crystalsmelter", "idle_empty")
